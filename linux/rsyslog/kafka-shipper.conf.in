@@ -1,0 +1,94 @@
+# Logster endpoint shipper — rsyslog imfile + omkafka.
+# TEMPLATE: rendered to /etc/rsyslog.d/60-logster-kafka-shipper.conf by
+# `logster-sensor-setup --brokers <host:port>[,<host:port>...]`.
+# Do not edit the rendered file by hand; re-run logster-sensor-setup instead.
+module(load="imfile")
+module(load="omkafka")
+
+template(name="KafkaEnvelope" type="list") {
+    constant(value="{")
+    constant(value="\"@timestamp\":\"")         property(name="timereported" dateFormat="rfc3339")
+    constant(value="\",\"host\":{\"name\":\"")  property(name="hostname")
+    constant(value="\"},\"log_source\":\"")     property(name="$!log_source")
+    constant(value="\",\"message\":\"")         property(name="msg" format="json")
+    constant(value="\"}")
+}
+
+input(type="imfile"
+      File="/var/log/audit/audit.log"
+      Tag="auditd"
+      Severity="info"
+      addMetadata="on"
+      reopenOnTruncate="on"
+      ruleset="rs_audit")
+
+input(type="imfile"
+      File="/var/log/ebpf_security/file_monitoring.log"
+      Tag="ebpf-file"
+      addMetadata="on"
+      reopenOnTruncate="on"
+      ruleset="rs_ebpf_file")
+
+input(type="imfile"
+      File="/var/log/ebpf_security/process_monitoring.log"
+      Tag="ebpf-process"
+      addMetadata="on"
+      reopenOnTruncate="on"
+      ruleset="rs_ebpf_process")
+
+input(type="imfile"
+      File="/var/log/ebpf_security/network_monitoring.log"
+      Tag="ebpf-network"
+      addMetadata="on"
+      reopenOnTruncate="on"
+      ruleset="rs_ebpf_network")
+
+ruleset(name="rs_audit") {
+    set $!log_source = "audit";
+    action(type="omkafka"
+           broker=[@KAFKA_BROKERS@]
+           topic="linux-auditd-logs"
+           template="KafkaEnvelope"
+           confParam=["compression.codec=gzip",
+                      "queue.buffering.max.ms=100",
+                      "batch.num.messages=500",
+                      "security.protocol=plaintext"]
+           partitions.auto="on")
+    stop
+}
+
+ruleset(name="rs_ebpf_file") {
+    set $!log_source = "file";
+    action(type="omkafka"
+           broker=[@KAFKA_BROKERS@]
+           topic="linux-ebpf-file-logs"
+           template="KafkaEnvelope"
+           confParam=["compression.codec=gzip",
+                      "security.protocol=plaintext"]
+           partitions.auto="on")
+    stop
+}
+
+ruleset(name="rs_ebpf_process") {
+    set $!log_source = "process";
+    action(type="omkafka"
+           broker=[@KAFKA_BROKERS@]
+           topic="linux-ebpf-process-logs"
+           template="KafkaEnvelope"
+           confParam=["compression.codec=gzip",
+                      "security.protocol=plaintext"]
+           partitions.auto="on")
+    stop
+}
+
+ruleset(name="rs_ebpf_network") {
+    set $!log_source = "network";
+    action(type="omkafka"
+           broker=[@KAFKA_BROKERS@]
+           topic="linux-ebpf-network-logs"
+           template="KafkaEnvelope"
+           confParam=["compression.codec=gzip",
+                      "security.protocol=plaintext"]
+           partitions.auto="on")
+    stop
+}

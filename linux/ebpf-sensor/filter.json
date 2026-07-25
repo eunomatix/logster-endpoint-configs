@@ -1,0 +1,195 @@
+{
+    "events": {
+        "exec": true,
+        "file": true,
+        "net": true
+    },
+
+    "pids": {
+        "mode": "off",
+        "list": []
+    },
+
+    "uids": {
+        "mode": "off",
+        "list": []
+    },
+
+    "comms": {
+        "mode": "exclude",
+        "list": ["cpuUsage", "systemd-oomd"]
+    },
+
+    "net_ports": {
+        "mode": "off",
+        "list": []
+    },
+
+    "security": {
+        "enabled": true,
+
+        "net": {
+            "drop_af_unix": true,
+            "drop_loopback": true,
+            "socket_raw_only": true,
+            "flow_dedup_seconds": 30,
+            "benign_infra_cidrs": [
+                "91.189.0.0/16",
+                "185.125.0.0/16"
+            ],
+            "suspicious_ports": [
+                23, 1080, 1234, 1337, 1604, 2222, 3389,
+                4444, 4445, 5555, 5900, 5901,
+                6666, 6667, 6697, 9001, 9050,
+                12345, 31337, 50050, 54321
+            ],
+            "idle_daemon_comms": [
+                "systemd-resolve",
+                "systemd-timesyn",
+                "systemd-network",
+                "NetworkManager",
+                "networkd-dispat",
+                "chronyd",
+                "cron",
+                "snapd",
+                "packagekitd",
+                "dbus-daemon",
+                "unattended-upgr"
+            ]
+        },
+
+        "file": {
+            "mode": "watch",
+            "open_dedup_seconds": 30,
+
+            "drop_prefixes": [
+                "/proc/", "/sys/", "/dev/null", "/dev/urandom",
+                "/dev/zero", "/dev/random", "/lib/", "/lib64/",
+                "/usr/lib/", "/usr/lib64/", "/usr/local/lib/",
+                "/etc/ld.so.cache", "/etc/nsswitch.conf", "/etc/localtime",
+                "/usr/share/zoneinfo/", "/usr/share/locale/",
+                "/var/lib/sss/", "/run/systemd/", "/var/lib/systemd/",
+                "/var/log/journal/", "/var/lib/snapd/", "/run/mount/"
+            ],
+
+            "sensitive_paths": [
+                "/etc/shadow",
+                "/etc/gshadow",
+                "/etc/security/opasswd",
+                "/etc/ssh/",
+                "/root/.ssh/",
+                "/root/.aws/",
+                "/root/.config/gcloud/",
+                "/var/run/docker.sock",
+                "/run/docker.sock",
+                "/run/containerd/containerd.sock"
+            ],
+
+            "sensitive_write_paths": [
+                "/etc/passwd",
+                "/etc/group",
+                "/etc/sudoers",
+                "/etc/sudoers.d/",
+                "/etc/pam.d/",
+                "/etc/security/",
+                "/etc/ld.so.preload",
+                "/etc/ld.so.conf",
+                "/etc/ld.so.conf.d/",
+                "/etc/crontab",
+                "/etc/cron.d/",
+                "/etc/cron.hourly/",
+                "/etc/cron.daily/",
+                "/etc/cron.weekly/",
+                "/etc/cron.monthly/",
+                "/var/spool/cron/",
+                "/var/spool/at/",
+                "/etc/systemd/system/",
+                "/etc/systemd/user/",
+                "/lib/systemd/system/",
+                "/usr/lib/systemd/system/",
+                "/etc/init.d/",
+                "/etc/rc.local",
+                "/etc/update-motd.d/",
+                "/usr/local/bin/",
+                "/usr/local/sbin/",
+                "/etc/profile",
+                "/etc/profile.d/",
+                "/etc/bash.bashrc",
+                "/etc/bashrc",
+                "/etc/zsh/",
+                "/etc/modprobe.d/",
+                "/etc/modules-load.d/",
+                "/etc/modules",
+                "/etc/sysctl.conf",
+                "/etc/sysctl.d/",
+                "/etc/hosts",
+                "/etc/resolv.conf",
+                "/etc/environment",
+                "/etc/audit/",
+                "/etc/rsyslog.conf",
+                "/etc/rsyslog.d/",
+                "/etc/logrotate.d/",
+                "/var/log/wtmp",
+                "/var/log/btmp",
+                "/var/log/lastlog",
+                "/var/run/utmp",
+                "/etc/docker/daemon.json",
+                "/etc/apt/apt.conf.d/",
+                "/var/www/",
+                "/srv/www/",
+                "/usr/share/nginx/html/",
+                "/boot/",
+                "/lib/modules/",
+                "/usr/lib/modules/",
+                "/etc/ufw/",
+                "/var/spool/mail/",
+                "/var/mail/"
+            ],
+
+            "destruct_watch_paths": [
+                "/var/log/",
+                "/var/log/audit/",
+                "/var/audit/"
+            ],
+
+                "sensitive_create_paths": [
+                "/tmp/",
+                "/var/tmp/",
+                "/dev/shm/"
+            ],
+
+            "sensitive_suffixes": [
+                "authorized_keys",
+                "id_rsa",
+                "id_dsa",
+                "id_ecdsa",
+                "id_ed25519",
+                ".bashrc",
+                ".bash_profile",
+                ".profile",
+                ".bash_history",
+                ".zshrc",
+                ".zprofile",
+                ".zsh_history",
+                ".netrc",
+                ".pgpass",
+                ".my.cnf",
+                ".git-credentials",
+                ".aws/credentials",
+                ".kube/config"
+            ]
+        },
+
+        "exec": {
+            "suspicious_prefixes": [
+                "/tmp/",
+                "/var/tmp/",
+                "/dev/shm/",
+                "/run/user/",
+                "/var/www/",
+                "/srv/www/",
+                "/boot/"
+            ]
+        }
+    }
+}

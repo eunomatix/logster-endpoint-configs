@@ -1,0 +1,56 @@
+# ======================== Winlogbeat Configuration ============================
+#
+# Logster endpoint shipper for Windows. Reads the Sysmon operational channel
+# and publishes events to the App Node's Kafka listener.
+#
+# Install to: C:\Program Files\Winlogbeat\winlogbeat.yml
+#
+# BEFORE USE: replace <app-node> under output.kafka.hosts with your
+# appliance's EXTERNAL_KAFKA_LAN_HOST address.
+
+winlogbeat.event_logs:
+  - name: Microsoft-Windows-Sysmon/Operational
+    processors:
+      - add_fields:
+          target: host
+          fields:
+            name: ${COMPUTERNAME}
+
+# ======================== Processors ==========================================
+
+processors:
+  - add_host_metadata:
+      when.not.contains.tags: forwarded
+  - add_fields:
+      target: ''
+      fields:
+        host.hostname: ${COMPUTERNAME}
+
+# ======================== Outputs =============================================
+
+# Disable Elasticsearch output
+output.elasticsearch:
+  enabled: false
+
+# Enable Kafka output
+output.kafka:
+  enabled: true
+  hosts: ["<app-node>:29092"]   # <-- set to your App Node's EXTERNAL_KAFKA_LAN_HOST IP
+  topic: "sysmon-logs"
+  partition.round_robin:
+    reachable_only: true
+  required_acks: 1
+  compression: gzip
+  codec.json:
+    pretty: false
+    escape_html: false
+
+# ======================== Logging =============================================
+
+logging.level: info
+logging.to_files: true
+logging.files:
+  path: C:\Program Files\Winlogbeat\logs
+  name: winlogbeat
+  keepfiles: 7
+  permissions: 0640

@@ -1,4 +1,4 @@
-# logster-endpoint-config
+# logster-endpoint-configs
 
 Baseline endpoint configuration for [Logster](https://docs.eunomatix.com/logster/)
 — the collector and shipper configuration files that run on each monitored
@@ -40,12 +40,12 @@ existing endpoint:
 # auditd ruleset — dropped into rules.d and compiled by augenrules, so it
 # coexists with any baseline you already run
 sudo curl -fsSL -o /etc/audit/rules.d/logster.rules \
-  https://raw.githubusercontent.com/eunomatix/logster-endpoint-config/main/linux/auditd/audit.rules
+  https://raw.githubusercontent.com/eunomatix/logster-endpoint-configs/main/linux/auditd/audit.rules
 sudo augenrules --load
 
 # eBPF sensor filter
 sudo curl -fsSL -o /etc/logster/ebpf-sensor/filter.json \
-  https://raw.githubusercontent.com/eunomatix/logster-endpoint-config/main/linux/ebpf-sensor/filter.json
+  https://raw.githubusercontent.com/eunomatix/logster-endpoint-configs/main/linux/ebpf-sensor/filter.json
 sudo systemctl restart logster-ebpf-sensor
 ```
 

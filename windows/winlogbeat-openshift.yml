@@ -1,0 +1,76 @@
+# ======================== Winlogbeat Configuration (OpenShift) ================
+#
+# Logster endpoint shipper for Windows — OpenShift / Helm deployments.
+# Reads the Sysmon operational channel and publishes events to Logster's
+# Kafka external listener, exposed through the OpenShift router as
+# TLS-passthrough routes.
+#
+# Install to: C:\Program Files\Winlogbeat\winlogbeat.yml
+#
+# For the two-node OVA appliance instead, use winlogbeat.yml — its Kafka
+# listener is plaintext on port 29092 and TLS must stay disabled there.
+#
+# BEFORE USE — replace the bootstrap host under output.kafka.hosts with your
+# cluster's Kafka bootstrap route. Get it with:
+#
+#   oc get kafka logster -n logster \
+#     -o jsonpath='{.status.listeners[?(@.name=="external")].bootstrapServers}{"\n"}'
+#
+# DNS REQUIREMENT — a Kafka client connects to the bootstrap route first and
+# is then redirected to the advertised per-broker route. Every endpoint must
+# resolve BOTH hostnames (bootstrap and logster-kafka-<id>-...) and reach
+# them on port 443, or the handshake succeeds but no data flows. List them
+# with: oc get routes -n logster
+
+winlogbeat.event_logs:
+  - name: Microsoft-Windows-Sysmon/Operational
+    processors:
+      - add_fields:
+          target: host
+          fields:
+            name: ${COMPUTERNAME}
+
+# ======================== Processors ==========================================
+
+processors:
+  - add_host_metadata:
+      when.not.contains.tags: forwarded
+  - add_fields:
+      target: ''
+      fields:
+        host.hostname: ${COMPUTERNAME}
+
+# ======================== Outputs =============================================
+
+# Disable Elasticsearch output
+output.elasticsearch:
+  enabled: false
+
+# Enable Kafka output
+output.kafka:
+  enabled: true
+  # Bootstrap route host on port 443 — NOT the appliance's :29092 address
+  hosts: ["logster-kafka-bootstrap-logster.apps.<cluster-domain>:443"] # make sure to put the exact host; check from the console under routes of logster-dual-0
+  topic: "sysmon-logs"
+  partition.round_robin:
+    reachable_only: true
+  required_acks: 1
+  compression: gzip
+  codec.json:
+    pretty: false
+    escape_html: false
+  # The Kafka routes are TLS-passthrough with a self-signed Kafka cluster CA
+  # certificate. Connect over TLS, but skip certificate validation so the CA
+  # does not have to be distributed to every endpoint.
+  ssl.enabled: true
+  ssl.verification_mode: none
+
+# ======================== Logging =============================================
+
+logging.level: info
+logging.to_files: true
+logging.files:
+  path: C:\Program Files\Winlogbeat\logs
+  name: winlogbeat
+  keepfiles: 7
+  permissions: 0640

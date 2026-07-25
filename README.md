@@ -22,7 +22,8 @@ without waiting for a new release package.
 | [`linux/ebpf-sensor/filter.json`](linux/ebpf-sensor/filter.json) | `/etc/logster/ebpf-sensor/filter.json` | Runtime filter for the Logster eBPF sensor — which process, file, and network events are captured, dropped, or flagged as security-relevant. Operator-editable; not overwritten on package upgrade. |
 | [`linux/rsyslog/kafka-shipper.conf.in`](linux/rsyslog/kafka-shipper.conf.in) | `/etc/rsyslog.d/60-logster-kafka-shipper.conf` | rsyslog `imfile` + `omkafka` shipper template — tails the auditd and eBPF sensor logs and publishes them to the App Node's Kafka listener. Rendered from this template by `logster-sensor-setup --brokers <host:port>`; also the reference for the JSON envelope if you ship with a different agent. |
 | [`windows/sysmon-config.xml`](windows/sysmon-config.xml) | `C:\Program Files\Sysmon\sysmon-config.xml` | Sysmon configuration — the high-signal process, network, and file baseline Logster analyzes. Based on the community [SwiftOnSecurity `sysmon-config`](https://github.com/SwiftOnSecurity/sysmon-config) (CC BY 4.0; attribution retained in the file header). |
-| [`windows/winlogbeat.yml`](windows/winlogbeat.yml) | `C:\Program Files\Winlogbeat\winlogbeat.yml` | Winlogbeat shipper configuration — forwards the Sysmon channel to the App Node's Kafka listener. |
+| [`windows/winlogbeat.yml`](windows/winlogbeat.yml) | `C:\Program Files\Winlogbeat\winlogbeat.yml` | Winlogbeat shipper configuration for the **OVA appliance** — forwards the Sysmon channel to the App Node's Kafka listener on port 29092 (plaintext). |
+| [`windows/winlogbeat-openshift.yml`](windows/winlogbeat-openshift.yml) | `C:\Program Files\Winlogbeat\winlogbeat.yml` | Winlogbeat shipper configuration for **OpenShift** deployments — ships to the Kafka bootstrap route on port 443 over TLS, with certificate validation disabled. |
 
 ## Using these files
 
@@ -49,15 +50,26 @@ sudo curl -fsSL -o /etc/logster/ebpf-sensor/filter.json \
 sudo systemctl restart logster-ebpf-sensor
 ```
 
-**Windows.** Download `sysmon-config.xml` and `winlogbeat.yml`, set your App
-Node address in `winlogbeat.yml`, then install Sysmon with the configuration
-and start the Winlogbeat service.
+**Windows.** Download `sysmon-config.xml` plus the Winlogbeat configuration
+that matches your deployment, set your Logster address in it, then install
+Sysmon with the configuration and start the Winlogbeat service. Both
+Winlogbeat files install to the same path — pick one:
+
+| Your deployment | Use | Kafka target |
+| --- | --- | --- |
+| Two-node OVA appliance | `winlogbeat.yml` | App Node `:29092`, plaintext |
+| OpenShift / Helm | `winlogbeat-openshift.yml` | Kafka bootstrap route `:443`, TLS with certificate validation off |
 
 > [!IMPORTANT]
-> Both shipper configurations contain a placeholder for your appliance
+> Every shipper configuration contains a placeholder for your Logster
 > address. On Linux, `logster-sensor-setup --brokers <host:port>` fills it in
-> for you. On Windows, edit `output.kafka.hosts` in `winlogbeat.yml` by hand
-> before starting the service.
+> for you. On Windows, edit `output.kafka.hosts` by hand before starting the
+> service.
+>
+> Do not mix the two Windows files up. TLS settings must match the listener:
+> the appliance listener is plaintext, so `ssl.enabled: true` against it will
+> fail to connect; the OpenShift routes are TLS-only, so a plaintext client
+> will fail there.
 
 ## Tuning
 

@@ -18,7 +18,7 @@ without waiting for a new release package.
 
 | File | Installs to | Purpose |
 | --- | --- | --- |
-| [`linux/auditd/audit.rules`](linux/auditd/audit.rules) | `/etc/audit/audit.rules` | Audit daemon ruleset — 328 active rules covering privilege escalation, persistence, credential access, kernel tampering, and attacker tooling. Based on Florian Roth's *Linux Audit Daemon — Best Practice Configuration* with Logster tuning. |
+| [`linux/auditd/audit.rules`](linux/auditd/audit.rules) | `/etc/audit/rules.d/logster.rules` | Audit daemon ruleset — 328 active rules covering privilege escalation, persistence, credential access, kernel tampering, and attacker tooling. Based on Florian Roth's *Linux Audit Daemon — Best Practice Configuration* with Logster tuning. |
 | [`linux/ebpf-sensor/filter.json`](linux/ebpf-sensor/filter.json) | `/etc/logster/ebpf-sensor/filter.json` | Runtime filter for the Logster eBPF sensor — which process, file, and network events are captured, dropped, or flagged as security-relevant. Operator-editable; not overwritten on package upgrade. |
 | [`linux/rsyslog/kafka-shipper.conf.in`](linux/rsyslog/kafka-shipper.conf.in) | `/etc/rsyslog.d/60-logster-kafka-shipper.conf` | rsyslog `imfile` + `omkafka` shipper template — tails the auditd and eBPF sensor logs and publishes them to the App Node's Kafka listener. Rendered from this template by `logster-sensor-setup --brokers <host:port>`; also the reference for the JSON envelope if you ship with a different agent. |
 | [`windows/sysmon-config.xml`](windows/sysmon-config.xml) | `C:\Program Files\Sysmon\sysmon-config.xml` | Sysmon configuration — the high-signal process, network, and file baseline Logster analyzes. Based on the community [SwiftOnSecurity `sysmon-config`](https://github.com/SwiftOnSecurity/sysmon-config) (CC BY 4.0; attribution retained in the file header). |
@@ -29,16 +29,19 @@ without waiting for a new release package.
 Both endpoint installation guides walk through this in order; the short
 version:
 
-**Linux.** The sensor release package already installs this baseline, so in a
-standard deployment you do not need to download anything from here. Use this
-repository to review coverage, or to pull an updated baseline onto an existing
-endpoint:
+**Linux.** The sensor release package already ships this baseline, so in a
+standard deployment you do not need to download anything from here — the
+sensor filter is installed and active, and the auditd ruleset is staged at
+`/usr/share/logster-ebpf-sensor/audit.rules` for you to review and apply.
+Use this repository to review coverage, or to pull an updated baseline onto an
+existing endpoint:
 
 ```bash
-# auditd ruleset
-sudo curl -fsSL -o /etc/audit/audit.rules \
+# auditd ruleset — dropped into rules.d and compiled by augenrules, so it
+# coexists with any baseline you already run
+sudo curl -fsSL -o /etc/audit/rules.d/logster.rules \
   https://raw.githubusercontent.com/eunomatix/logster-endpoint-config/main/linux/auditd/audit.rules
-sudo augenrules --load && sudo systemctl restart auditd
+sudo augenrules --load
 
 # eBPF sensor filter
 sudo curl -fsSL -o /etc/logster/ebpf-sensor/filter.json \

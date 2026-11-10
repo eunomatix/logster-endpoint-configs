@@ -62,7 +62,7 @@
 
 <Sysmon schemaversion="4.50">
 	<!--SYSMON META CONFIG-->
-	<HashAlgorithms>md5,sha256,IMPHASH</HashAlgorithms> <!-- Both MD5 and SHA256 are the industry-standard algorithms. Remove IMPHASH if you do not use DLL import fingerprinting. -->
+	<!-- Executable hashing is intentionally OFF: no HashAlgorithms entry (Sysmon default is None). Hashing every process image and loaded image is expensive on busy hosts and Logster detections do not use hashes. -->
 	<CheckRevocation/> <!-- Check loaded drivers, log if their code-signing certificate has been revoked, in case malware stole one to sign a kernel driver -->
 
 	<!-- <ImageLoad/> --> <!-- Would manually force-on ImageLoad monitoring, even without configuration below. Included only documentation. -->
